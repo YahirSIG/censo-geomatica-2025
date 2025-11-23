@@ -1,0 +1,104 @@
+/* --- PALETA DE COLORES UNICACH GEOMÁTICA --- */
+:root {
+    --brand-blue: #003399;    
+    --brand-yellow: #FFCC00;  
+    --brand-green: #009933;
+}
+
+/* Ajustes Generales de Layout */
+body {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    font-family: 'Roboto', sans-serif;
+}
+
+/* --- MAPA --- */
+#map {
+    height: 40vh; /* Móvil: 40% de alto */
+    width: 100%;
+    z-index: 1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-bottom: 4px solid var(--brand-yellow); 
+}
+
+/* --- SIDEBAR (FORMULARIO) --- */
+#sidebar {
+    height: 60vh; /* Móvil: 60% de alto */
+    z-index: 2;
+    overflow-y: hidden; 
+}
+
+/* --- SOBREESCRIBIR BOOTSTRAP CON TUS COLORES --- */
+.brand-text-color { color: var(--brand-blue); }
+
+.btn-primary {
+    background-color: var(--brand-blue) !important;
+    border-color: var(--brand-blue) !important;
+}
+.btn-primary:hover, .btn-primary:active {
+    background-color: #002266 !important; 
+    border-color: #002266 !important;
+}
+
+.btn-outline-primary {
+    color: var(--brand-blue) !important;
+    border-color: var(--brand-blue) !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--brand-blue) !important;
+    color: white !important;
+}
+.text-primary { color: var(--brand-blue) !important; }
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--brand-yellow);
+    box-shadow: 0 0 0 0.25rem rgba(255, 204, 0, 0.25);
+}
+
+.brand-logo { height: 60px; width: auto; object-fit: contain; }
+
+/* --- CHIPS (Etiquetas de Especialidad) --- */
+.checkbox-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.checkbox-btn input[type="checkbox"] { display: none; }
+.checkbox-btn span {
+    display: inline-block; padding: 6px 12px; 
+    background-color: #f8f9fa; 
+    color: #495057;
+    border-radius: 50rem; 
+    font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    border: 1px solid #dee2e6; transition: all 0.2s ease; user-select: none;
+}
+.checkbox-btn input[type="checkbox"]:checked + span {
+    background-color: var(--brand-blue); 
+    color: white; 
+    border-color: var(--brand-blue);
+    box-shadow: 0 2px 5px rgba(0, 51, 153, 0.3);
+}
+
+/* Input "Otro" animado */
+.hidden-input { display: none; border-left: 3px solid var(--brand-yellow) !important; }
+.show-input { display: block !important; animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- ESTILOS DEL POPUP (VENTANA DE INFO) --- */
+.leaflet-popup-content-wrapper { border-radius: 8px; }
+.leaflet-popup-content h3 { color: var(--brand-blue); font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
+.leaflet-popup-content p { margin: 5px 0; font-size: 0.9rem; }
+.badge-tech { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 2px; }
+
+/* --- VISTA DE ESCRITORIO --- */
+@media (min-width: 768px) {
+    body { flex-direction: row; } 
+    #sidebar {
+        width: 400px;
+        height: 100vh;
+        order: 1;
+        border-right: 4px solid var(--brand-yellow);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    }
+    #map { flex: 1; height: 100vh; order: 2; border-bottom: none; }
+    .brand-logo { height: 75px; }
+}
