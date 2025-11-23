@@ -5,100 +5,137 @@
     --brand-green: #009933;
 }
 
-/* Ajustes Generales de Layout */
+/* Ajustes Generales */
 body {
     height: 100vh;
     width: 100vw;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden; /* Vital para que no haya scroll en body */
     font-family: 'Roboto', sans-serif;
+    position: relative; /* Para posicionar absolute dentro */
 }
 
 /* --- MAPA --- */
 #map {
-    height: 40vh; /* Móvil: 40% de alto */
+    height: 100%; /* Ocupa TODO el fondo */
     width: 100%;
     z-index: 1;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-bottom: 4px solid var(--brand-yellow); 
 }
 
-/* --- SIDEBAR (FORMULARIO) --- */
+/* --- SIDEBAR COLAPSABLE (ESTILO BASE) --- */
 #sidebar {
-    height: 60vh; /* Móvil: 60% de alto */
-    z-index: 2;
-    overflow-y: hidden; 
+    position: absolute;
+    z-index: 1000; /* Encima del mapa */
+    background: white;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Animación suave */
+    display: flex;
+    flex-direction: column;
 }
 
-/* --- SOBREESCRIBIR BOOTSTRAP CON TUS COLORES --- */
+/* --- ESTILOS ESPECÍFICOS MÓVIL (Bottom Sheet) --- */
+@media (max-width: 767px) {
+    #sidebar {
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80vh; /* Ocupa el 80% de la pantalla al abrirse */
+        border-radius: 20px 20px 0 0; /* Bordes redondeados arriba */
+        
+        /* Estado por defecto: OCULTO (Hundido abajo) */
+        transform: translateY(100%); 
+    }
+
+    #sidebar.active {
+        /* Estado ACTIVO: VISIBLE (Sube) */
+        transform: translateY(0);
+    }
+
+    /* Botón Toggle en Móvil (Pestaña arriba) */
+    #sidebarToggle {
+        position: absolute;
+        top: -50px; /* Pegado arriba del sidebar */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%; /* Círculo */
+        border: 4px solid white; /* Borde para separar del mapa */
+        background-color: var(--brand-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        font-size: 1.5rem;
+        z-index: 1001;
+    }
+}
+
+/* --- ESTILOS ESPECÍFICOS ESCRITORIO (Side Drawer) --- */
+@media (min-width: 768px) {
+    #sidebar {
+        top: 0;
+        left: 0;
+        width: 400px;
+        height: 100vh;
+        box-shadow: 2px 0 15px rgba(0,0,0,0.15);
+        border-right: 4px solid var(--brand-yellow);
+        
+        /* Estado por defecto: OCULTO (A la izquierda) */
+        transform: translateX(-100%);
+    }
+
+    #sidebar.active {
+        /* Estado ACTIVO: VISIBLE */
+        transform: translateX(0);
+    }
+
+    /* Botón Toggle en Escritorio (Pestaña lateral) */
+    #sidebarToggle {
+        position: absolute;
+        top: 20px;
+        right: -50px; /* Salido a la derecha del sidebar */
+        width: 50px;
+        height: 50px;
+        border-radius: 0 10px 10px 0;
+        background-color: var(--brand-blue);
+        color: white;
+        border: none;
+        border-left: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 4px 0 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+}
+
+/* --- ESTILOS GENERALES (Botones, Inputs, etc.) --- */
 .brand-text-color { color: var(--brand-blue); }
-
-.btn-primary {
-    background-color: var(--brand-blue) !important;
-    border-color: var(--brand-blue) !important;
-}
-.btn-primary:hover, .btn-primary:active {
-    background-color: #002266 !important; 
-    border-color: #002266 !important;
-}
-
-.btn-outline-primary {
-    color: var(--brand-blue) !important;
-    border-color: var(--brand-blue) !important;
-}
-.btn-outline-primary:hover {
-    background-color: var(--brand-blue) !important;
-    color: white !important;
-}
-.text-primary { color: var(--brand-blue) !important; }
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--brand-yellow);
-    box-shadow: 0 0 0 0.25rem rgba(255, 204, 0, 0.25);
-}
-
 .brand-logo { height: 60px; width: auto; object-fit: contain; }
 
-/* --- CHIPS (Etiquetas de Especialidad) --- */
+/* Botones y Formulario */
+.btn-primary { background-color: var(--brand-blue) !important; border-color: var(--brand-blue) !important; }
+.btn-primary:hover { background-color: #002266 !important; }
+.btn-outline-primary { color: var(--brand-blue) !important; border-color: var(--brand-blue) !important; }
+.btn-outline-primary:hover { background-color: var(--brand-blue) !important; color: white !important; }
+.form-control:focus, .form-select:focus { border-color: var(--brand-yellow); box-shadow: 0 0 0 0.25rem rgba(255, 204, 0, 0.25); }
+
+/* Chips */
 .checkbox-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .checkbox-btn input[type="checkbox"] { display: none; }
 .checkbox-btn span {
-    display: inline-block; padding: 6px 12px; 
-    background-color: #f8f9fa; 
-    color: #495057;
-    border-radius: 50rem; 
-    font-size: 0.85rem; font-weight: 500; cursor: pointer;
-    border: 1px solid #dee2e6; transition: all 0.2s ease; user-select: none;
+    display: inline-block; padding: 6px 12px; background-color: #f8f9fa; color: #495057;
+    border-radius: 50rem; font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    border: 1px solid #dee2e6; transition: all 0.2s ease;
 }
 .checkbox-btn input[type="checkbox"]:checked + span {
-    background-color: var(--brand-blue); 
-    color: white; 
-    border-color: var(--brand-blue);
-    box-shadow: 0 2px 5px rgba(0, 51, 153, 0.3);
+    background-color: var(--brand-blue); color: white; border-color: var(--brand-blue);
 }
-
-/* Input "Otro" animado */
 .hidden-input { display: none; border-left: 3px solid var(--brand-yellow) !important; }
 .show-input { display: block !important; animation: fadeIn 0.3s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- ESTILOS DEL POPUP (VENTANA DE INFO) --- */
-.leaflet-popup-content-wrapper { border-radius: 8px; }
-.leaflet-popup-content h3 { color: var(--brand-blue); font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
-.leaflet-popup-content p { margin: 5px 0; font-size: 0.9rem; }
-.badge-tech { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 2px; }
-
-/* --- VISTA DE ESCRITORIO --- */
-@media (min-width: 768px) {
-    body { flex-direction: row; } 
-    #sidebar {
-        width: 400px;
-        height: 100vh;
-        order: 1;
-        border-right: 4px solid var(--brand-yellow);
-        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-    }
-    #map { flex: 1; height: 100vh; order: 2; border-bottom: none; }
-    .brand-logo { height: 75px; }
-}
+/* Popup */
+.leaflet-popup-content h3 { color: var(--brand-blue); font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
+.badge-tech { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }

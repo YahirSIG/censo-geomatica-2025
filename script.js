@@ -6,14 +6,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Variable para guardar datos localmente y usarlos en las gráficas
 let globalData = [];
 
 // ---------------------------------------------------------
-// 2. CONFIGURACIÓN DEL MAPA
+// 2. CONFIGURACIÓN DEL MAPA (ZOOM MOVIDO)
 // ---------------------------------------------------------
 const CHIAPAS_CENTER = [16.7569, -93.1292];
-const map = L.map('map').setView(CHIAPAS_CENTER, 8); 
+
+const map = L.map('map', {
+    zoomControl: false // Desactivado por defecto para moverlo
+}).setView(CHIAPAS_CENTER, 8); 
+
+// Zoom abajo a la derecha
+L.control.zoom({
+    position: 'bottomright'
+}).addTo(map);
 
 const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
 const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
@@ -44,10 +51,7 @@ async function loadMapPoints() {
         }
 
         console.log(`✅ Éxito: Se encontraron ${data.length} registros.`);
-        
-        // Guardamos los datos en la variable global para usarlos en el Dashboard
         globalData = data;
-        // Actualizamos el contador del dashboard aunque no se abra el modal aun
         document.getElementById('totalRegistros').innerText = data.length;
 
         if (data) {
@@ -59,13 +63,16 @@ async function loadMapPoints() {
                     const lng = parseFloat(match[1]); 
                     const lat = parseFloat(match[2]);
 
-                    // --- POPUP ---
+                    // --- POPUP CON CARRERA ---
                     let popupContent = `
                         <div style="min-width: 200px; font-family: 'Roboto', sans-serif;">
                             <h3 style="margin: 0; color: #003399; font-size: 1rem; border-bottom: 2px solid #FFCC00; padding-bottom: 5px;">
                                 ${egresado.nombre_completo}
                             </h3>
-                            <p class="text-muted small mt-1 mb-2">
+                            <p class="small mt-1 mb-2" style="color: #009933; font-weight: bold;">
+                                ${egresado.carrera || 'Ing. Geomática'}
+                            </p>
+                            <p class="text-muted small mb-2">
                                 🎓 Gen: ${egresado.anio_egreso || 'No esp.'} <br>
                                 💼 <strong>${egresado.situacion_laboral}</strong>
                             </p>
@@ -125,11 +132,10 @@ async function loadMapPoints() {
     }
 }
 
-// Cargar inicial
 loadMapPoints();
 
 // ---------------------------------------------------------
-// 4. LÓGICA DEL DASHBOARD (GRÁFICOS)
+// 4. LÓGICA DEL DASHBOARD
 // ---------------------------------------------------------
 let chartSituacionInstance = null;
 let chartEspInstance = null;
@@ -137,14 +143,12 @@ let chartEspInstance = null;
 function updateCharts() {
     if(globalData.length === 0) return;
 
-    // 1. Procesar Datos de Situación Laboral
     const conteoSituacion = {};
     globalData.forEach(item => {
         const sit = item.situacion_laboral || "No especificado";
         conteoSituacion[sit] = (conteoSituacion[sit] || 0) + 1;
     });
 
-    // 2. Procesar Datos de Especialidades
     const conteoEsp = {
         "Cartografía": 0, "Fotogrametría": 0, "Topografía": 0, 
         "Geodesia": 0, "Drones": 0, "Dev/SIG": 0
@@ -159,10 +163,7 @@ function updateCharts() {
         if(item.esp_desarrollo) conteoEsp["Dev/SIG"]++;
     });
 
-    // --- RENDERIZAR GRÁFICO 1: PIE CHART (SITUACIÓN) ---
     const ctx1 = document.getElementById('chartSituacion').getContext('2d');
-    
-    // Si ya existe, lo destruimos para actualizar
     if(chartSituacionInstance) chartSituacionInstance.destroy();
 
     chartSituacionInstance = new Chart(ctx1, {
@@ -174,15 +175,10 @@ function updateCharts() {
                 backgroundColor: ['#003399', '#FFCC00', '#009933', '#dc3545', '#6c757d', '#17a2b8']
             }]
         },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
 
-    // --- RENDERIZAR GRÁFICO 2: BAR CHART (ESPECIALIDADES) ---
     const ctx2 = document.getElementById('chartEspecialidades').getContext('2d');
-    
     if(chartEspInstance) chartEspInstance.destroy();
 
     chartEspInstance = new Chart(ctx2, {
@@ -195,17 +191,12 @@ function updateCharts() {
                 backgroundColor: '#003399'
             }]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
     });
 }
 
-
 // ---------------------------------------------------------
-// 5. GEOLOCALIZACIÓN Y REGISTRO
+// 5. GEOLOCALIZACIÓN
 // ---------------------------------------------------------
 let marker = null;
 let currentLat = null, currentLng = null;
@@ -246,35 +237,42 @@ function setMarker(latlng, zoom = null) {
 }
 
 btnLocate.addEventListener('click', () => {
-    // IMPORTANTE PARA MOVIL: Feedback visual inmediato
     btnLocate.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Buscando GPS...`;
-    
-    // Opciones para mejorar la precisión en móvil
-    const options = { 
-        enableHighAccuracy: true, 
-        timeout: 10000, 
-        maximumAge: 0 
-    };
-
+    const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
     map.locate({ setView: true, maxZoom: 16, ...options });
 });
 
-map.on('locationfound', e => setMarker(e.latlng, 16));
+map.on('locationfound', e => {
+    setMarker(e.latlng, 16);
+    if(window.innerWidth < 768) {
+        sidebar.classList.add('active');
+        updateToggleIcon();
+    }
+});
+
 map.on('locationerror', (e) => {
-    console.warn(e); // Para depuración
-    alert("No se pudo obtener el GPS automáticamente. \n\nPor favor:\n1. Revisa que tengas el GPS encendido.\n2. Da permisos al navegador.\n3. O haz clic manualmente en el mapa.");
+    console.warn(e);
+    alert("No se pudo obtener el GPS. Haz clic en el mapa.");
     btnLocate.innerHTML = "📍 Reintentar GPS";
 });
-map.on('click', e => setMarker(e.latlng));
+
+map.on('click', e => {
+    setMarker(e.latlng);
+    if(window.innerWidth < 768) {
+        sidebar.classList.add('active');
+        updateToggleIcon();
+    }
+});
 
 setMarker({lat: 16.753, lng: -93.115}, 10);
 
 // ---------------------------------------------------------
-// 6. FORMULARIO
+// 6. FORMULARIO (CARRERA INTEGRADA)
 // ---------------------------------------------------------
 const checkOtro = document.getElementById('check_otro');
 const inputOtro = document.getElementById('input_otro_texto');
 
+// Logic Especialidad
 checkOtro.addEventListener('change', function() {
     if(this.checked) {
         inputOtro.classList.add('show-input');
@@ -285,23 +283,42 @@ checkOtro.addEventListener('change', function() {
     }
 });
 
+// Logic Carrera
+const selectCarrera = document.getElementById('carrera');
+const inputCarreraOtro = document.getElementById('carrera_otro');
+
+selectCarrera.addEventListener('change', function() {
+    if(this.value === 'Otro') {
+        inputCarreraOtro.classList.add('show-input');
+        inputCarreraOtro.focus();
+    } else {
+        inputCarreraOtro.classList.remove('show-input');
+        inputCarreraOtro.value = '';
+    }
+});
+
 const form = document.getElementById('surveyForm');
 const btnSubmit = document.getElementById('btnSubmit');
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault(); 
-    if (!currentLat || !currentLng) return alert("Falta ubicación en el mapa. Presiona el botón de GPS o haz clic en el mapa.");
+    if (!currentLat || !currentLng) return alert("Falta ubicación en el mapa.");
 
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Enviando...`;
 
+    let carreraVal = selectCarrera.value;
+    if (carreraVal === 'Otro') {
+        carreraVal = inputCarreraOtro.value || 'No especificado';
+    }
+
     const formData = {
         nombre_completo: document.getElementById('nombre').value,
+        carrera: carreraVal,
         anio_egreso: document.getElementById('anio').value,
         situacion_laboral: document.getElementById('situacion').value,
         descripcion_servicios: document.getElementById('descripcion').value,
         contacto_url: document.getElementById('contacto').value,
-        
         esp_cartografia: document.getElementById('check_cartografia').checked,
         esp_fotogrametria: document.getElementById('check_fotogrametria').checked,
         esp_topografia: document.getElementById('check_topografia').checked,
@@ -319,11 +336,12 @@ form.addEventListener('submit', async (e) => {
         alert("¡Registro exitoso!");
         form.reset();
         inputOtro.classList.remove('show-input');
+        inputCarreraOtro.classList.remove('show-input');
         map.setView(CHIAPAS_CENTER, 8);
         coordsInfo.style.display = 'none';
         btnLocate.innerHTML = "📍 Obtener mi Ubicación Actual";
         
-        loadMapPoints(); // Recargar mapa y actualizar datos globales para gráficas
+        loadMapPoints(); 
 
     } catch (err) {
         console.error(err);
@@ -332,4 +350,42 @@ form.addEventListener('submit', async (e) => {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = "Guardar Registro";
     }
+});
+
+// ---------------------------------------------------------
+// 7. LÓGICA DE INTERFAZ (SIDEBAR COLAPSABLE)
+// ---------------------------------------------------------
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const toggleIcon = document.getElementById('toggleIcon');
+
+function updateToggleIcon() {
+    const isActive = sidebar.classList.contains('active');
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+        toggleIcon.innerHTML = isActive ? '▼' : '▲'; 
+    } else {
+        toggleIcon.innerHTML = isActive ? '◀' : '▶';
+    }
+}
+
+sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+    updateToggleIcon();
+});
+
+function initSidebarState() {
+    if (window.innerWidth >= 768) {
+        sidebar.classList.add('active');
+    } else {
+        sidebar.classList.remove('active');
+    }
+    updateToggleIcon();
+}
+
+initSidebarState();
+
+window.addEventListener('resize', () => {
+    updateToggleIcon();
 });

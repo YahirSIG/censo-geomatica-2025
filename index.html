@@ -13,94 +13,111 @@
 </head>
 <body>
 
-    <aside id="sidebar" class="bg-white p-4 d-flex flex-column">
+    <aside id="sidebar" class="bg-white shadow-lg">
         
-        <div class="brand-header text-center pb-3 mb-3 border-bottom">
-            <div class="d-flex justify-content-center gap-3 mb-2">
-                <img src="logo_geomatica.png" alt="Logo Geomática" class="brand-logo">
-                <img src="facultad (1).png" alt="Logo Facultad" class="brand-logo">
+        <button id="sidebarToggle" class="btn btn-primary shadow-sm">
+            <span id="toggleIcon">◀</span>
+        </button>
+
+        <div class="p-4 d-flex flex-column h-100">
+            <div class="brand-header text-center pb-3 mb-3 border-bottom">
+                <div class="d-flex justify-content-center gap-3 mb-2">
+                    <img src="logo_geomatica.png" alt="Logo Geomática" class="brand-logo">
+                    <img src="facultad (1).png" alt="Logo Facultad" class="brand-logo">
+                </div>
+                <div>
+                    <h2 class="h5 fw-bold mb-1 brand-text-color">Red Geomática UNICACH</h2>
+                    <p class="text-muted small mb-2">Registro GIS Day. Ubícate y conecta.</p>
+                    <button type="button" class="btn btn-sm btn-outline-dark w-100" data-bs-toggle="modal" data-bs-target="#statsModal" onclick="updateCharts()">
+                        📊 Ver Estadísticas en Tiempo Real
+                    </button>
+                </div>
             </div>
-            <div>
-                <h2 class="h5 fw-bold mb-1 brand-text-color">Red Geomática UNICACH</h2>
-                <p class="text-muted small mb-2">Registro GIS Day. Ubícate y conecta.</p>
-                <button type="button" class="btn btn-sm btn-outline-dark w-100" data-bs-toggle="modal" data-bs-target="#statsModal" onclick="updateCharts()">
-                    📊 Ver Estadísticas en Tiempo Real
-                </button>
-            </div>
-        </div>
-        
-        <form id="surveyForm" class="flex-grow-1 overflow-auto pe-2">
             
-            <div class="mb-4 text-center p-3 rounded bg-light border border-secondary-subtle">
-                <button type="button" id="btnLocate" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
-                    📍 Obtener mi Ubicación Actual
+            <form id="surveyForm" class="flex-grow-1 overflow-auto pe-2">
+                <div class="mb-4 text-center p-3 rounded bg-light border border-secondary-subtle">
+                    <button type="button" id="btnLocate" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
+                        📍 Obtener mi Ubicación Actual
+                    </button>
+                    <div id="coordsInfo" class="mt-2" style="display:none;">
+                        <span id="coordsDisplay" class="fw-bold text-primary small"></span>
+                        <small class="text-muted" style="font-size: 0.75rem;">Mueve el pin si es necesario</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label fw-bold small">Nombre Completo</label>
+                    <input type="text" id="nombre" class="form-control" required placeholder="Ing. Nombre Apellido">
+                </div>
+
+                <div class="mb-3">
+                    <label for="carrera" class="form-label fw-bold small">Carrera de Egreso</label>
+                    <select id="carrera" class="form-select">
+                        <option value="Ing. Geomática">Ing. Geomática</option>
+                        <option value="Ing. Topográfica e Hidrológica">Ing. Topográfica e Hidrológica</option>
+                        <option value="Ing. Ambiental">Ing. Ambiental</option>
+                        <option value="Otro">Otra...</option>
+                    </select>
+                    <input type="text" id="carrera_otro" class="form-control mt-2 hidden-input" placeholder="Especifica tu carrera...">
+                </div>
+
+                <div class="mb-3">
+                    <label for="anio" class="form-label fw-bold small">Año de Egreso</label>
+                    <input type="number" id="anio" class="form-control" min="1970" max="2030" placeholder="Ej. 1998">
+                </div>
+
+                <div class="mb-3">
+                    <label for="situacion" class="form-label fw-bold small">Situación Actual</label>
+                    <select id="situacion" class="form-select">
+                        <option value="Sector Privado">Sector Privado</option>
+                        <option value="Sector Público">Gobierno / Sector Público</option>
+                        <option value="Academia">Docencia / Investigación</option>
+                        <option value="Emprendedor">Emprendedor / Consultor</option>
+                        <option value="Estudiante">Posgrado</option>
+                        <option value="Buscando">En búsqueda activa</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Especialidad / Fuerte</label>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-btn"><input type="checkbox" id="check_cartografia"><span>Cartografía</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_fotogrametria"><span>Fotogrametría</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_topografia"><span>Topografía</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_geodesia"><span>Geodesia</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_drones"><span>Drones / VANT</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_desarrollo"><span>Desarrollo / SIG</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_otro"><span>Otro...</span></label>
+                    </div>
+                    <input type="text" id="input_otro_texto" class="form-control mt-2 hidden-input" placeholder="Especifica tu especialidad...">
+                </div>
+
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label fw-bold small">Servicios / Descripción</label>
+                    <textarea id="descripcion" class="form-control" rows="3" placeholder="Breve descripción profesional..."></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="contacto" class="form-label fw-bold small">Sitio Web / LinkedIn / Red Social</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">🔗</span>
+                        <input type="url" id="contacto" class="form-control" placeholder="https://linkedin.com/in/tu-perfil">
+                    </div>
+                    <div class="form-text small">Opcional. Para que te contacten.</div>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold text-uppercase shadow-sm">
+                    Guardar Registro
                 </button>
-                <div id="coordsInfo" class="mt-2" style="display:none;">
-                    <span id="coordsDisplay" class="fw-bold text-primary small"></span>
-                    <small class="text-muted" style="font-size: 0.75rem;">Mueve el pin si es necesario</small>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="nombre" class="form-label fw-bold small">Nombre Completo</label>
-                <input type="text" id="nombre" class="form-control" required placeholder="Ing. Nombre Apellido">
-            </div>
-
-            <div class="mb-3">
-                <label for="anio" class="form-label fw-bold small">Año de Egreso</label>
-                <input type="number" id="anio" class="form-control" min="2000" max="2025" placeholder="Ej. 2018">
-            </div>
-
-            <div class="mb-3">
-                <label for="situacion" class="form-label fw-bold small">Situación Actual</label>
-                <select id="situacion" class="form-select">
-                    <option value="Sector Privado">Sector Privado</option>
-                    <option value="Sector Público">Gobierno / Sector Público</option>
-                    <option value="Academia">Docencia / Investigación</option>
-                    <option value="Emprendedor">Emprendedor / Consultor</option>
-                    <option value="Estudiante">Posgrado</option>
-                    <option value="Buscando">En búsqueda activa</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Especialidad / Fuerte</label>
-                <div class="checkbox-grid">
-                    <label class="checkbox-btn"><input type="checkbox" id="check_cartografia"><span>Cartografía</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_fotogrametria"><span>Fotogrametría</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_topografia"><span>Topografía</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_geodesia"><span>Geodesia</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_drones"><span>Drones / VANT</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_desarrollo"><span>Desarrollo / SIG</span></label>
-                    <label class="checkbox-btn"><input type="checkbox" id="check_otro"><span>Otro...</span></label>
-                </div>
-                <input type="text" id="input_otro_texto" class="form-control mt-2 hidden-input" placeholder="Especifica tu especialidad...">
-            </div>
-
-            <div class="mb-3">
-                <label for="descripcion" class="form-label fw-bold small">Servicios / Descripción</label>
-                <textarea id="descripcion" class="form-control" rows="3" placeholder="Breve descripción profesional..."></textarea>
-            </div>
-
-            <div class="mb-4">
-                <label for="contacto" class="form-label fw-bold small">Sitio Web / LinkedIn / Red Social</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light">🔗</span>
-                    <input type="url" id="contacto" class="form-control" placeholder="https://linkedin.com/in/tu-perfil">
-                </div>
-                <div class="form-text small">Opcional. Para que te contacten.</div>
-            </div>
-
-            <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold text-uppercase shadow-sm">
-                Guardar Registro
-            </button>
-        </form>
+            </form>
+        </div>
     </aside>
 
     <main id="map"></main>
 
     <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
                 <div class="modal-header bg-light">
                     <h5 class="modal-title fw-bold text-primary">📊 Dashboard Geomática</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -114,7 +131,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <h6 class="text-center text-muted fw-bold">Situación Laboral</h6>
