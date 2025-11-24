@@ -8,16 +8,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <aside id="sidebar" class="bg-white shadow-lg">
-        
         <button id="sidebarToggle" class="btn btn-primary shadow-sm">
             <span id="toggleIcon">◀</span>
         </button>
+
+        <div id="mobile-hint" class="mobile-register-hint">
+            <span>¡Regístrate aquí! 👇</span>
+        </div>
 
         <div class="p-4 d-flex flex-column h-100">
             <div class="brand-header text-center pb-3 mb-3 border-bottom">
@@ -109,11 +114,42 @@
                 <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold text-uppercase shadow-sm">
                     Guardar Registro
                 </button>
+
+                <div class="sites-section mt-5 pt-3 border-top">
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase small ls-1">
+                        🌐 Red y Sitios Oficiales
+                    </h6>
+                    <div class="sites-grid">
+                        <a href="https://www.unicach.mx/" target="_blank" class="site-card"><div class="site-icon">🏛️</div><div class="site-info"><span class="site-title">UNICACH</span><span class="site-desc">Sitio Oficial</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://www.facebook.com/profile.php?id=100075923576722" target="_blank" class="site-card"><div class="site-icon">👥</div><div class="site-info"><span class="site-title">Geo Gente</span><span class="site-desc">Comunidad FB</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://www.facebook.com/unicachingenieria" target="_blank" class="site-card"><div class="site-icon">👷‍♂️</div><div class="site-info"><span class="site-title">Fac. Ingeniería</span><span class="site-desc">Facebook Oficial</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://www.facebook.com/geomaticaunicach" target="_blank" class="site-card"><div class="site-icon">🛰️</div><div class="site-info"><span class="site-title">Ing. Geomática</span><span class="site-desc">Facebook Oficial</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://www.inegi.org.mx/" target="_blank" class="site-card"><div class="site-icon">🗺️</div><div class="site-info"><span class="site-title">INEGI</span><span class="site-desc">Datos y Mapas</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://qgis.org/es/site/" target="_blank" class="site-card"><div class="site-icon">💻</div><div class="site-info"><span class="site-title">QGIS</span><span class="site-desc">Software Libre</span></div><span class="site-arrow">→</span></a>
+                    </div>
+                </div>
             </form>
         </div>
     </aside>
 
     <main id="map"></main>
+
+    <div id="map-hint" class="map-hint-box">
+        <span>👆 Toca los puntos dorados para ver la info</span>
+        <button onclick="document.getElementById('map-hint').style.display='none'" class="btn-close-hint">&times;</button>
+    </div>
+
+    <div id="layers-hint" class="layers-hint-box">
+        <span>🗺️ Cambia estilo</span>
+    </div>
+
+    <div id="zoom-hint" class="zoom-hint-box">
+        <span>🔍 Zoom</span>
+    </div>
+
+    <div id="reset-hint" class="reset-hint-box">
+        <span>🏠 Restablecer</span>
+    </div>
 
     <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -132,14 +168,8 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <h6 class="text-center text-muted fw-bold">Situación Laboral</h6>
-                            <canvas id="chartSituacion"></canvas>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <h6 class="text-center text-muted fw-bold">Especialidades (Top 5)</h6>
-                            <canvas id="chartEspecialidades"></canvas>
-                        </div>
+                        <div class="col-md-6 mb-4"><h6 class="text-center text-muted fw-bold">Situación Laboral</h6><canvas id="chartSituacion"></canvas></div>
+                        <div class="col-md-6 mb-4"><h6 class="text-center text-muted fw-bold">Especialidades (Top 5)</h6><canvas id="chartEspecialidades"></canvas></div>
                     </div>
                 </div>
                 <div class="modal-footer">
