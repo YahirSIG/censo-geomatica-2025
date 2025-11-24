@@ -38,6 +38,7 @@ const goldIcon = new L.Icon({
 });
 
 async function loadMapPoints() {
+    console.log("🔄 Descargando puntos...");
     try {
         const { data, error } = await supabase.from('egresados_unicach').select('*, location_wkt'); 
         if (error) return console.error("❌ Error:", error.message);
@@ -80,6 +81,11 @@ async function loadMapPoints() {
                 L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup(popupContent);
             }
         });
+        
+        // QUITAR PANTALLA DE CARGA
+        const loader = document.getElementById('loader');
+        if(loader) loader.classList.add('loader-hidden');
+
     } catch (err) { console.error(err); }
 }
 loadMapPoints();
