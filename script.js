@@ -38,7 +38,6 @@ const goldIcon = new L.Icon({
 });
 
 async function loadMapPoints() {
-    console.log("🔄 Descargando puntos...");
     try {
         const { data, error } = await supabase.from('egresados_unicach').select('*, location_wkt'); 
         if (error) return console.error("❌ Error:", error.message);
@@ -81,11 +80,6 @@ async function loadMapPoints() {
                 L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup(popupContent);
             }
         });
-        
-        // QUITAR PANTALLA DE CARGA
-        const loader = document.getElementById('loader');
-        if(loader) loader.classList.add('loader-hidden');
-
     } catch (err) { console.error(err); }
 }
 loadMapPoints();
@@ -139,14 +133,28 @@ function setMarker(latlng, zoom = null) {
 
 btnLocate.addEventListener('click', () => {
     btnLocate.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Buscando GPS...`;
-    map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000 });
+    
+    // OPCIONES RELAJADAS PARA MÓVILES/FACEBOOK
+    const options = { 
+        enableHighAccuracy: false,  // IMPORTANTE: False para que no falle en Facebook
+        timeout: 20000,             // 20 segundos de espera
+        maximumAge: 10000           // Acepta ubicaciones de hace 10 segundos
+    };
+    map.locate({ setView: true, maxZoom: 16, ...options });
 });
 
 map.on('locationfound', e => {
     setMarker(e.latlng, 16);
     if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); }
 });
-map.on('locationerror', () => { alert("No se pudo obtener el GPS. Haz clic en el mapa."); btnLocate.innerHTML = "📍 Reintentar GPS"; });
+
+map.on('locationerror', (e) => {
+    console.warn(e);
+    // MENSAJE ESPECÍFICO SI FALLA
+    alert("⚠️ No se pudo obtener el GPS automáticamente (posiblemente bloqueado por Facebook).\n\n👉 Solución: Arrastra el pin manualmente o abre este enlace en Chrome/Safari.");
+    btnLocate.innerHTML = "📍 Reintentar GPS";
+});
+
 map.on('click', e => {
     setMarker(e.latlng);
     if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); }
@@ -239,4 +247,10 @@ const layerControl = document.querySelector('.leaflet-control-layers');
 if(layerControl) {
     layerControl.addEventListener('mouseover', () => { const layerHint = document.getElementById('layers-hint'); if(layerHint) layerHint.style.display = "none"; });
     layerControl.addEventListener('click', () => { const layerHint = document.getElementById('layers-hint'); if(layerHint) layerHint.style.display = "none"; });
+}
+
+// --- DETECCIÓN DE FACEBOOK (NUEVO) ---
+const ua = navigator.userAgent || navigator.vendor || window.opera;
+if ((ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1)) {
+    document.getElementById('browser-alert').style.display = 'block';
 }

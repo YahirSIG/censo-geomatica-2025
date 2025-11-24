@@ -7,38 +7,21 @@
 
 /* Ajustes Generales */
 body {
-    height: 100vh;
-    height: 100dvh; /* Para móviles modernos */
-    width: 100vw;
-    overflow: hidden; 
-    font-family: 'Roboto', sans-serif;
-    position: relative; 
+    height: 100vh; height: 100dvh; width: 100vw;
+    overflow: hidden; font-family: 'Roboto', sans-serif; position: relative; 
 }
 
-/* --- PANTALLA DE CARGA (LOADER) --- */
-.loader-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    z-index: 9999; /* Encima de absolutamente todo */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.5s ease, visibility 0.5s;
-}
-
-.loader-hidden {
-    opacity: 0;
-    visibility: hidden;
+/* --- ALERTA DE NAVEGADOR (FB/INSTAGRAM) --- */
+.browser-alert {
+    position: absolute; top: 0; left: 0; width: 100%;
+    background-color: #ffc107; color: #333;
+    padding: 10px; font-size: 0.9rem; text-align: center;
+    z-index: 9999; border-bottom: 1px solid #e0a800;
 }
 
 /* --- MAPA --- */
 #map {
-    height: 100%; 
-    width: 100%;
-    z-index: 1;
+    height: 100%; width: 100%; z-index: 1;
 }
 
 /* --- SIDEBAR COLAPSABLE --- */
@@ -62,7 +45,7 @@ body {
 }
 
 /* =========================================
-   ESTILOS ESPECÍFICOS MÓVIL (CORRECCIONES FINALES)
+   ESTILOS ESPECÍFICOS MÓVIL
    ========================================= */
 @media (max-width: 767px) {
     #sidebar { bottom: 0; left: 0; width: 100%; height: 85dvh; border-radius: 20px 20px 0 0; transform: translateY(100%); box-shadow: 0 -5px 20px rgba(0,0,0,0.15); }
@@ -74,42 +57,12 @@ body {
     .mobile-register-hint { display: block; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); background-color: white; color: var(--brand-blue); padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1002; white-space: nowrap; animation: bounce 2s infinite; }
     .mobile-register-hint::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; }
 
-    /* --- REUBICACIÓN TOTAL DE ALERTAS (MÓVIL) --- */
-    
-    /* 1. ARRIBA DERECHA: Hint Capas */
-    .layers-hint-box { 
-        top: 15px; 
-        right: 55px; 
-        font-size: 0.75rem; padding: 5px 10px; 
-        z-index: 1003;
-    }
-
-    /* 2. ABAJO IZQUIERDA: Hint "Toca Puntos" */
-    .map-hint-box { 
-        top: auto !important;   /* Anular top */
-        bottom: 150px;          /* Pegado abajo (encima de la leyenda) */
-        left: 10px;             
-        transform: none;        /* Quitar centrado */
-        width: auto; max-width: 220px;
-        font-size: 0.75rem; padding: 8px 12px; 
-        text-align: left;
-        z-index: 1003;
-    }
-    /* Ocultar la flecha de este hint en móvil porque flota "en el aire" */
+    /* DISTRIBUCIÓN DE VIÑETAS (SIN TRASLAPE) */
+    .layers-hint-box { top: 15px; right: 55px; font-size: 0.75rem; padding: 5px 10px; z-index: 1003; }
+    .map-hint-box { top: auto !important; bottom: 150px; left: 10px; transform: none; width: auto; max-width: 220px; font-size: 0.75rem; padding: 8px 12px; text-align: left; z-index: 1003; }
     .map-hint-box::after { display: none; }
-
-    /* 3. ABAJO DERECHA: Zoom y Reset */
-    .zoom-hint-box { 
-        right: 60px; 
-        bottom: 25px; /* Alineado al centro vertical de los botones +/- */
-        font-size: 0.7rem; padding: 4px 8px; 
-    }
-
-    .reset-hint-box { 
-        right: 60px; 
-        bottom: 95px; /* Subido para alinearse con la casita que está sobre el zoom */
-        font-size: 0.7rem; padding: 4px 8px; 
-    } 
+    .zoom-hint-box { right: 60px; bottom: 25px; font-size: 0.7rem; padding: 4px 8px; }
+    .reset-hint-box { right: 60px; bottom: 95px; font-size: 0.7rem; padding: 4px 8px; } 
 }
 
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-10px); } 60% { transform: translateX(-50%) translateY(-5px); } }
