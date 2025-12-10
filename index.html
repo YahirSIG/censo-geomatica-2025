@@ -9,60 +9,60 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <div id="browser-alert" class="browser-alert" style="display: none;">
-        ⚠️ <b>Atención:</b> El navegador de Facebook bloquea el GPS. <br>
-        Por favor toca los 3 puntos (•••) y elige <b>"Abrir en el navegador"</b>.
+        ⚠️ <b>Atención:</b> Navegador limitado detectado. <br>
+        Para usar el GPS, toca los 3 puntos (•••) y elige <b>"Abrir en Chrome/Safari"</b>.
     </div>
 
-    <aside id="sidebar" class="bg-white shadow-lg">
+    <aside id="sidebar">
         
-        <button id="sidebarToggle" class="btn btn-primary shadow-sm">
+        <button id="sidebarToggle" class="shadow-sm">
             <span id="toggleIcon">◀</span>
         </button>
 
-        <div id="mobile-hint" class="mobile-register-hint">
-            <span>¡Regístrate aquí! 👇</span>
-        </div>
-
-        <div class="p-4 d-flex flex-column h-100">
-            <div class="brand-header text-center pb-3 mb-3 border-bottom">
-                <div class="d-flex justify-content-center gap-3 mb-2">
+        <div class="sidebar-content h-100 d-flex flex-column">
+            
+            <div class="brand-header text-center pb-3 mb-2">
+                <div class="d-flex justify-content-center gap-3 mb-2 align-items-center">
                     <img src="logo_geomatica.png" alt="Logo Geomática" class="brand-logo">
                     <img src="facultad (1).png" alt="Logo Facultad" class="brand-logo">
                 </div>
                 <div>
-                    <h2 class="h5 fw-bold mb-1 brand-text-color">Red Geomática UNICACH</h2>
+                    <h2 class="h5 fw-bold mb-1 text-primary">Red Geomática UNICACH</h2>
                     <p class="text-muted small mb-2">Registro GIS Day. Ubícate y conecta.</p>
-                    <button type="button" class="btn btn-sm btn-outline-dark w-100" data-bs-toggle="modal" data-bs-target="#statsModal" onclick="updateCharts()">
-                        📊 Ver Estadísticas en Tiempo Real
+                    <button type="button" class="btn btn-sm btn-glass w-75" data-bs-toggle="modal" data-bs-target="#statsModal" onclick="updateCharts()">
+                        📊 Ver Estadísticas (<span id="btnCount">0</span>)
                     </button>
                 </div>
             </div>
             
-            <form id="surveyForm" class="flex-grow-1 overflow-auto pe-2">
-                <div class="mb-4 text-center p-3 rounded bg-light border border-secondary-subtle">
-                    <button type="button" id="btnLocate" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
-                        📍 Obtener mi Ubicación Actual
+            <form id="surveyForm" class="flex-grow-1 overflow-auto px-4 pb-4 custom-scrollbar">
+                
+                <div class="mb-4 text-center p-3 rounded glass-card">
+                    <button type="button" id="btnLocate" class="btn-locate w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
+                        📍 Obtener mi Ubicación
                     </button>
-                    <div id="coordsInfo" class="mt-2" style="display:none;">
-                        <span id="coordsDisplay" class="fw-bold text-primary small"></span>
-                        <small class="text-muted" style="font-size: 0.75rem;">Mueve el pin si es necesario</small>
+                    <div id="coordsInfo" class="mt-2 animate-fade" style="display:none;">
+                        <span id="coordsDisplay" class="fw-bold text-success small"></span>
+                        <div class="text-muted x-small mt-1">💡 Mueve el pin en el mapa si necesitas ajustar.</div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="nombre" class="form-label fw-bold small">Nombre Completo</label>
-                    <input type="text" id="nombre" class="form-control" required placeholder="Ing. Nombre Apellido">
+                    <label for="nombre" class="form-label">Nombre Completo</label>
+                    <input type="text" id="nombre" class="form-control" required placeholder="Ing. Tu Nombre">
                 </div>
 
                 <div class="mb-3">
-                    <label for="carrera" class="form-label fw-bold small">Carrera de Egreso</label>
+                    <label for="carrera" class="form-label">Carrera de Egreso</label>
                     <select id="carrera" class="form-select">
                         <option value="Ing. Geomática">Ing. Geomática</option>
                         <option value="Ing. Topográfica e Hidrológica">Ing. Topográfica e Hidrológica</option>
@@ -72,66 +72,71 @@
                     <input type="text" id="carrera_otro" class="form-control mt-2 hidden-input" placeholder="Especifica tu carrera...">
                 </div>
 
-                <div class="mb-3">
-                    <label for="anio" class="form-label fw-bold small">Año de Egreso</label>
-                    <input type="number" id="anio" class="form-control" min="1970" max="2030" placeholder="Ej. 1998">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="anio" class="form-label">Año Egreso</label>
+                        <input type="number" id="anio" class="form-control" min="1970" max="2030" placeholder="Ej. 2023">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="situacion" class="form-label">Situación</label>
+                        <select id="situacion" class="form-select">
+                            <option value="Sector Privado">Privado</option>
+                            <option value="Sector Público">Gobierno</option>
+                            <option value="Academia">Docencia</option>
+                            <option value="Emprendedor">Emprendedor</option>
+                            <option value="Estudiante">Posgrado</option>
+                            <option value="Buscando">Buscando</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="situacion" class="form-label fw-bold small">Situación Actual</label>
-                    <select id="situacion" class="form-select">
-                        <option value="Sector Privado">Sector Privado</option>
-                        <option value="Sector Público">Gobierno / Sector Público</option>
-                        <option value="Academia">Docencia / Investigación</option>
-                        <option value="Emprendedor">Emprendedor / Consultor</option>
-                        <option value="Estudiante">Posgrado</option>
-                        <option value="Buscando">En búsqueda activa</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold small">Especialidad / Fuerte</label>
+                    <label class="form-label">Área de Especialidad</label>
                     <div class="checkbox-grid">
                         <label class="checkbox-btn"><input type="checkbox" id="check_cartografia"><span>Cartografía</span></label>
                         <label class="checkbox-btn"><input type="checkbox" id="check_fotogrametria"><span>Fotogrametría</span></label>
                         <label class="checkbox-btn"><input type="checkbox" id="check_topografia"><span>Topografía</span></label>
                         <label class="checkbox-btn"><input type="checkbox" id="check_geodesia"><span>Geodesia</span></label>
                         <label class="checkbox-btn"><input type="checkbox" id="check_drones"><span>Drones / VANT</span></label>
-                        <label class="checkbox-btn"><input type="checkbox" id="check_desarrollo"><span>Desarrollo / SIG</span></label>
+                        <label class="checkbox-btn"><input type="checkbox" id="check_desarrollo"><span>Desarrollo SIG</span></label>
                         <label class="checkbox-btn"><input type="checkbox" id="check_otro"><span>Otro...</span></label>
                     </div>
-                    <input type="text" id="input_otro_texto" class="form-control mt-2 hidden-input" placeholder="Especifica tu especialidad...">
+                    <input type="text" id="input_otro_texto" class="form-control mt-2 hidden-input" placeholder="Especifica...">
                 </div>
 
                 <div class="mb-3">
-                    <label for="descripcion" class="form-label fw-bold small">Servicios / Descripción</label>
-                    <textarea id="descripcion" class="form-control" rows="3" placeholder="Breve descripción profesional..."></textarea>
+                    <label for="descripcion" class="form-label">Servicios / Bio</label>
+                    <textarea id="descripcion" class="form-control" rows="2" placeholder="Breve descripción profesional..."></textarea>
                 </div>
 
                 <div class="mb-4">
-                    <label for="contacto" class="form-label fw-bold small">Sitio Web / LinkedIn / Red Social</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">🔗</span>
-                        <input type="url" id="contacto" class="form-control" placeholder="https://linkedin.com/in/tu-perfil">
-                    </div>
-                    <div class="form-text small">Opcional. Para que te contacten.</div>
+                    <label for="contacto" class="form-label">Link de Contacto (LinkedIn/Web)</label>
+                    <input type="url" id="contacto" class="form-control" placeholder="https://...">
                 </div>
 
-                <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold text-uppercase shadow-sm">
+                <button type="submit" id="btnSubmit" class="btn btn-submit w-100 py-3 fw-bold text-uppercase shadow-sm mb-4">
                     Guardar Registro
                 </button>
 
-                <div class="sites-section mt-5 pt-3 border-top">
-                    <h6 class="fw-bold text-muted mb-3 text-uppercase small ls-1">
-                        🌐 Red y Sitios Oficiales
-                    </h6>
+                <div class="sites-section pt-3 border-top">
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase x-small ls-1 text-center">Enlaces de Interés</h6>
                     <div class="sites-grid">
-                        <a href="https://www.unicach.mx/" target="_blank" class="site-card"><div class="site-icon">🏛️</div><div class="site-info"><span class="site-title">UNICACH</span><span class="site-desc">Sitio Oficial</span></div><span class="site-arrow">→</span></a>
-                        <a href="https://www.facebook.com/profile.php?id=100075923576722" target="_blank" class="site-card"><div class="site-icon">👥</div><div class="site-info"><span class="site-title">Geo Gente</span><span class="site-desc">Comunidad FB</span></div><span class="site-arrow">→</span></a>
-                        <a href="https://www.facebook.com/unicachingenieria" target="_blank" class="site-card"><div class="site-icon">👷‍♂️</div><div class="site-info"><span class="site-title">Fac. Ingeniería</span><span class="site-desc">Facebook Oficial</span></div><span class="site-arrow">→</span></a>
-                        <a href="https://www.facebook.com/geomaticaunicach" target="_blank" class="site-card"><div class="site-icon">🛰️</div><div class="site-info"><span class="site-title">Ing. Geomática</span><span class="site-desc">Facebook Oficial</span></div><span class="site-arrow">→</span></a>
-                        <a href="https://www.inegi.org.mx/" target="_blank" class="site-card"><div class="site-icon">🗺️</div><div class="site-info"><span class="site-title">INEGI</span><span class="site-desc">Datos y Mapas</span></div><span class="site-arrow">→</span></a>
-                        <a href="https://qgis.org/es/site/" target="_blank" class="site-card"><div class="site-icon">💻</div><div class="site-info"><span class="site-title">QGIS</span><span class="site-desc">Software Libre</span></div><span class="site-arrow">→</span></a>
+                        <a href="https://www.unicach.mx/" target="_blank" class="site-card">
+                            <div class="site-icon">🏛️</div>
+                            <span class="site-title">UNICACH</span>
+                        </a>
+                        <a href="https://www.facebook.com/profile.php?id=100075923576722" target="_blank" class="site-card">
+                            <div class="site-icon">📻</div>
+                            <span class="site-title">GeoGente</span>
+                        </a>
+                        <a href="https://www.facebook.com/geomaticaunicach" target="_blank" class="site-card">
+                            <div class="site-icon">🛰️</div>
+                            <span class="site-title">Ing. Geomática</span>
+                        </a>
+                        <a href="https://qgis.org/es/site/" target="_blank" class="site-card">
+                            <div class="site-icon">💻</div>
+                            <span class="site-title">QGIS</span>
+                        </a>
                     </div>
                 </div>
             </form>
@@ -140,46 +145,38 @@
 
     <main id="map"></main>
 
-    <div id="map-hint" class="map-hint-box">
-        <span>👆 Toca los puntos dorados para ver la info</span>
-        <button onclick="document.getElementById('map-hint').style.display='none'" class="btn-close-hint">&times;</button>
-    </div>
-
-    <div id="layers-hint" class="layers-hint-box">
-        <span>🗺️ Cambia estilo</span>
-    </div>
-
-    <div id="zoom-hint" class="zoom-hint-box">
-        <span>🔍 Zoom</span>
-    </div>
-
-    <div id="reset-hint" class="reset-hint-box">
-        <span>🏠 Restablecer</span>
-    </div>
-
     <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-light">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold text-primary">📊 Dashboard Geomática</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row text-center mb-4">
                         <div class="col-12">
-                            <div class="p-3 bg-primary text-white rounded">
-                                <h2 id="totalRegistros" class="display-4 fw-bold mb-0">0</h2>
-                                <small>Colegas Registrados</small>
+                            <div class="p-4 stats-card-bg rounded-4 shadow-sm position-relative">
+                                <span class="position-absolute top-0 end-0 m-3 badge bg-danger animate-pulse">● EN VIVO</span>
+                                
+                                <h2 id="totalRegistros" class="display-3 fw-bold mb-0">0</h2>
+                                <small class="text-white-50 text-uppercase ls-1">Colegas Registrados</small>
                             </div>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-4"><h6 class="text-center text-muted fw-bold">Situación Laboral</h6><canvas id="chartSituacion"></canvas></div>
-                        <div class="col-md-6 mb-4"><h6 class="text-center text-muted fw-bold">Especialidades (Top 5)</h6><canvas id="chartEspecialidades"></canvas></div>
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-center text-muted fw-bold small">Situación Laboral</h6>
+                            <div style="height: 250px;">
+                                <canvas id="chartSituacion"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-center text-muted fw-bold small">Especialidades (Top 5)</h6>
+                            <div style="height: 250px;">
+                                <canvas id="chartEspecialidades"></canvas>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -188,6 +185,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    
     <script src="script.js"></script>
 </body>
 </html>
