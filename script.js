@@ -4,9 +4,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let globalData = [];
 
-// --- 1. CONFIGURACIÓN DEL MAPA ---
-const MEXICO_CENTER = [16.753, -93.115]; 
-const MEXICO_ZOOM = 9;
+// --- 1. CONFIGURACIÓN DEL MAPA (AJUSTADO A MÉXICO) ---
+// Coordenadas centrales de la República Mexicana
+const MEXICO_CENTER = [23.6345, -102.5528]; 
+// Zoom 5 es ideal para ver todo el país en escritorio y móvil
+const MEXICO_ZOOM = 5; 
+
 const map = L.map('map', { zoomControl: false }).setView(MEXICO_CENTER, MEXICO_ZOOM); 
 
 // Capas
@@ -38,13 +41,14 @@ L.Control.Tour = L.Control.extend({
 });
 new L.Control.Tour({ position: 'bottomright' }).addTo(map);
 
-// 3. Botón Home
+// 3. Botón Home (Restablecer Vista)
 L.Control.ResetView = L.Control.extend({
     onAdd: function(map) {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-reset');
         div.innerHTML = '<a href="#" id="btnResetView" title="Vista General" role="button">🏠</a>';
         div.onclick = function(e) { 
             e.stopPropagation(); e.preventDefault(); 
+            // Esto ahora llevará al centro de México gracias a las constantes actualizadas arriba
             map.setView(MEXICO_CENTER, MEXICO_ZOOM); 
         };
         return div;
@@ -171,6 +175,8 @@ async function initData() {
 
         updateCountersUI();
 
+        // NOTA: Mantenemos el fitBounds si hay puntos, pero si quieres forzar siempre
+        // la vista de México al inicio, puedes comentar la siguiente línea:
         if (puntosValidos > 0) map.fitBounds(markersLayer.getBounds(), { padding: [50, 50] });
 
         // 2. Suscripción a Realtime
@@ -364,7 +370,7 @@ function updateCharts() {
     }
 }
 
-// --- TOUR GUIADO INTELIGENTE ---
+// --- TOUR GUIADO INTELIGENTE (ACTUALIZADO) ---
 const toggleSidebarForTour = (shouldBeOpen) => {
     const isActive = sidebar.classList.contains('active');
     if (shouldBeOpen && !isActive) sidebar.classList.add('active');
@@ -379,6 +385,11 @@ const driver = window.driver.js.driver({
         { element: '#sidebar', popover: { title: '📝 Registro', description: 'Regístrate aquí.', side: "right", align: 'start' }, onHighlightStarted: () => toggleSidebarForTour(true) },
         { element: '#btnLocate', popover: { title: '📍 GPS', description: 'Obtén tu ubicación antes de guardar.', side: "bottom" }, onHighlightStarted: () => toggleSidebarForTour(true) },
         { element: '.leaflet-control-layers', popover: { title: '🗺️ Mapas', description: 'Cambia el fondo.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
+        
+        // PASOS DE ZOOM Y RESET INCLUIDOS
+        { element: '.leaflet-control-zoom', popover: { title: '🔍 Zoom', description: 'Acerca o aleja el mapa.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
+        { element: '#btnResetView', popover: { title: '🏠 Vista General', description: 'Regresa al mapa de México.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
+        
         { element: '#btnHelp', popover: { title: '❓ Ayuda', description: 'Repite este tour cuando quieras.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
         { element: '.info.legend', popover: { title: '🏷️ Simbología', description: 'Azul: tú. Dorado: colegas.', side: "top" }, onHighlightStarted: () => toggleSidebarForTour(false) }
     ]
