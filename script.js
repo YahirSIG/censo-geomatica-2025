@@ -5,7 +5,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let globalData = [];
 
 // --- 1. CONFIGURACIÓN DEL MAPA ---
-const MEXICO_CENTER = [16.753, -93.115]; // Centrado aproximado en Tuxtla
+const MEXICO_CENTER = [16.753, -93.115]; 
 const MEXICO_ZOOM = 9;
 const map = L.map('map', { zoomControl: false }).setView(MEXICO_CENTER, MEXICO_ZOOM); 
 
@@ -173,19 +173,15 @@ async function initData() {
 
         if (puntosValidos > 0) map.fitBounds(markersLayer.getBounds(), { padding: [50, 50] });
 
-        // 2. Suscripción a Realtime (Nuevos Registros)
+        // 2. Suscripción a Realtime
         supabase
             .channel('egresados_realtime')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'egresados_unicach' }, (payload) => {
                 console.log('⚡ Nuevo registro en tiempo real:', payload.new);
-                // Agregar al array global
                 globalData.push(payload.new);
-                // Agregar marcador al mapa
                 addMarkerToMap(payload.new);
-                // Actualizar números y gráficas
                 updateCountersUI();
                 
-                // Efecto visual opcional: notificar usuario
                 const btnStats = document.querySelector('[data-bs-target="#statsModal"]');
                 if(btnStats) {
                     btnStats.classList.add('btn-warning'); 
@@ -280,7 +276,6 @@ form.addEventListener('submit', async (e) => {
         form.reset(); 
         map.setView(MEXICO_CENTER, MEXICO_ZOOM); coordsInfo.style.display = 'none'; btnLocate.innerHTML = "📍 Obtener mi Ubicación";
         sidebar.classList.remove('active'); updateToggleIcon(); 
-        // No llamamos loadMapPoints() aquí porque el listener realtime lo hará automáticamente
     } catch (err) { alert("Error: " + err.message); } finally { btnSubmit.disabled = false; btnSubmit.innerHTML = "Guardar Registro"; }
 });
 
@@ -295,11 +290,9 @@ function updateCharts() {
     const conteoEsp = { "Cartografía": 0, "Fotogrametría": 0, "Topografía": 0, "Geodesia": 0, "Drones": 0, "Dev/SIG": 0 };
     
     globalData.forEach(item => { 
-        // Situación
         const sit = item.situacion_laboral || "No especificado"; 
         conteoSituacion[sit] = (conteoSituacion[sit] || 0) + 1; 
         
-        // Especialidades
         if(item.esp_cartografia) conteoEsp["Cartografía"]++; 
         if(item.esp_fotogrametria) conteoEsp["Fotogrametría"]++; 
         if(item.esp_topografia) conteoEsp["Topografía"]++; 
@@ -308,10 +301,8 @@ function updateCharts() {
         if(item.esp_desarrollo) conteoEsp["Dev/SIG"]++; 
     });
 
-    // Colores UNICACH
-    const colorPrimary = '#003399'; 
-    const colorGold = '#FFCC00';
     const colorPalette = ['#003399', '#FFCC00', '#28a745', '#dc3545', '#6c757d', '#17a2b8'];
+    const isMobile = window.innerWidth < 768; // DETECTAR MÓVIL
 
     // Gráfico 1: Situación (Doughnut)
     const ctx1 = document.getElementById('chartSituacion');
@@ -324,14 +315,24 @@ function updateCharts() {
                 datasets: [{ 
                     data: Object.values(conteoSituacion), 
                     backgroundColor: colorPalette,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
                 }] 
             }, 
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
+                layout: { padding: 10 },
                 plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: {size: 11} } } 
+                    legend: { 
+                        position: isMobile ? 'right' : 'bottom', 
+                        labels: { 
+                            boxWidth: 10, 
+                            padding: 10, 
+                            font: { size: isMobile ? 10 : 12 } 
+                        },
+                        display: true 
+                    } 
                 } 
             } 
         });
@@ -348,14 +349,14 @@ function updateCharts() {
                 datasets: [{ 
                     label: 'Ingenieros', 
                     data: Object.values(conteoEsp), 
-                    backgroundColor: colorPrimary, 
+                    backgroundColor: '#003399', 
                     borderRadius: 4
                 }] 
             }, 
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                indexAxis: 'y', // Barras horizontales para leer mejor
+                indexAxis: 'y', 
                 scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, 
                 plugins: { legend: { display: false } } 
             } 
