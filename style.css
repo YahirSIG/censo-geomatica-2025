@@ -14,7 +14,6 @@ body {
     height: 100vh; height: 100dvh; width: 100vw;
     overflow: hidden; font-family: 'Roboto', sans-serif; 
     background-color: #f0f2f5; margin: 0; padding: 0;
-    /* CORRECCIÓN: Evitar rebote elástico en móviles */
     overscroll-behavior: none;
 }
 
@@ -52,7 +51,6 @@ body {
 .legend-icon { width: 20px; margin-right: 8px; }
 
 /* SIDEBAR & BOTÓN */
-/* CORRECCIÓN: Z-Index ajustado a 1040 para que el Modal de Bootstrap (z-index 1055) quede ENCIMA */
 #sidebar { position: absolute; z-index: 1040; background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); box-shadow: var(--shadow-soft); display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); overscroll-behavior: contain; }
 
 @media (min-width: 768px) {
@@ -64,9 +62,20 @@ body {
 @media (max-width: 767px) {
     .leaflet-right { right: 5px !important; }
     .leaflet-top { top: 10px !important; }
-    #sidebar { bottom: 0; left: 0; width: 100%; height: 85vh; border-radius: 24px 24px 0 0; transform: translateY(100%); background: rgba(255, 255, 255, 0.98); }
+    
+    /* MODIFICACIÓN: Altura cambiada de 85vh a 70vh para que no llegue hasta arriba */
+    #sidebar { 
+        bottom: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 70vh; /* <-- AQUÍ ESTÁ EL CAMBIO (antes era 85vh) */
+        border-radius: 24px 24px 0 0; 
+        transform: translateY(100%); 
+        background: rgba(255, 255, 255, 0.98); 
+    }
+    
     #sidebar.active { transform: translateY(0); }
-    /* Ajuste fino del botón en móvil */
+    
     #sidebarToggle { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; background: var(--unicach-blue); color: white; border: 4px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.15); font-size: 1.5rem; z-index: 1042; cursor: pointer; }
 }
 
@@ -77,7 +86,6 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0, 51, 153, 0.1); border-radius: 10px; }
 .form-label { color: var(--unicach-blue); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 4px; }
 
-/* CORRECCIÓN: Font-size 16px forzado para evitar zoom en iPhone al escribir */
 .form-control, .form-select { border: 1px solid rgba(0,0,0,0.05); background-color: rgba(255,255,255,0.5); border-radius: 10px; padding: 10px; font-size: 16px !important; }
 
 .btn-locate { background: white; border: 2px solid var(--unicach-blue); color: var(--unicach-blue); border-radius: 50rem; padding: 10px; }
