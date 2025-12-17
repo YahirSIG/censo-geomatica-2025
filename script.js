@@ -1,13 +1,18 @@
+// ==========================================
+// 1. CONFIGURACIÓN SUPABASE
+// ==========================================
 const SUPABASE_URL = 'https://ulmweagltluaeqfihtqj.supabase.co'; 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsbXdlYWdsdGx1YWVxZmlodHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0Mjc0NzIsImV4cCI6MjA3NTAwMzQ3Mn0.-JbIFHtIDokywpnvCQLGwMw5RFDgR6hA3jeAg7mbFRk';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Variable 'client' para evitar conflictos con la librería global
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let globalData = [];
 
-// --- 1. CONFIGURACIÓN DEL MAPA (AJUSTADO A MÉXICO) ---
-// Coordenadas centrales de la República Mexicana
+// ==========================================
+// 2. CONFIGURACIÓN DEL MAPA
+// ==========================================
 const MEXICO_CENTER = [23.6345, -102.5528]; 
-// Zoom 5 es ideal para ver todo el país en escritorio y móvil
 const MEXICO_ZOOM = 5; 
 
 const map = L.map('map', { zoomControl: false }).setView(MEXICO_CENTER, MEXICO_ZOOM); 
@@ -16,39 +21,38 @@ const map = L.map('map', { zoomControl: false }).setView(MEXICO_CENTER, MEXICO_Z
 const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
 const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
 const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+
 osm.addTo(map);
 L.control.layers({ "Callejero": osm, "Satélite": satelite, "Modo Oscuro": cartoDark }, null, { position: 'topright' }).addTo(map);
 
-// --- CONTROLES EN ORDEN ---
+// ==========================================
+// 3. CONTROLES DEL MAPA (Zoom, Reset, Tour)
+// ==========================================
 
-// 1. Zoom
+// 1. Zoom (se añade explícitamente para que Driver.js lo encuentre fácil)
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// 2. BOTÓN TOUR
+// 2. Botón de Ayuda / Tour
 L.Control.Tour = L.Control.extend({
     onAdd: function(map) {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
         div.innerHTML = '<a href="#" id="btnHelp" title="Ayuda / Tour" role="button" style="font-size: 1.2rem;">?</a>';
         div.onclick = function(e) { 
             e.stopPropagation(); e.preventDefault(); 
-            if (window.innerWidth < 768 && !sidebar.classList.contains('active')) { 
-                sidebar.classList.add('active'); updateToggleIcon(); 
-            }
-            driver.drive(); 
+            startTour(); 
         };
         return div;
     }
 });
 new L.Control.Tour({ position: 'bottomright' }).addTo(map);
 
-// 3. Botón Home (Restablecer Vista)
+// 3. Botón Home (Reset Vista)
 L.Control.ResetView = L.Control.extend({
     onAdd: function(map) {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-reset');
         div.innerHTML = '<a href="#" id="btnResetView" title="Vista General" role="button">🏠</a>';
         div.onclick = function(e) { 
             e.stopPropagation(); e.preventDefault(); 
-            // Esto ahora llevará al centro de México gracias a las constantes actualizadas arriba
             map.setView(MEXICO_CENTER, MEXICO_ZOOM); 
         };
         return div;
@@ -56,7 +60,9 @@ L.Control.ResetView = L.Control.extend({
 });
 new L.Control.ResetView({ position: 'bottomright' }).addTo(map);
 
-// --- ICONOS Y LEYENDA ---
+// ==========================================
+// 4. ICONOS Y LEYENDA
+// ==========================================
 const goldIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -76,7 +82,9 @@ legend.addTo(map);
 
 const markersLayer = L.featureGroup().addTo(map);
 
-// --- FUNCIONES AUXILIARES ---
+// ==========================================
+// 5. FUNCIONES AUXILIARES (PostGIS)
+// ==========================================
 function parsePostGISHex(hex) {
     if (!hex || typeof hex !== 'string' || hex.length < 50) return null;
     try {
@@ -100,10 +108,8 @@ function processCoordinates(rawLoc) {
     return coords;
 }
 
-// Función unificada para agregar marcador
 function addMarkerToMap(egresado) {
     const coords = processCoordinates(egresado.location || egresado.location_wkt);
-    
     if (coords && !isNaN(coords.lat) && !isNaN(coords.lng)) {
         let tagsHtml = '';
         if(egresado.esp_cartografia) tagsHtml += `<span class="popup-tag">🗺️ Cartografía</span>`;
@@ -142,66 +148,46 @@ function addMarkerToMap(egresado) {
     return false;
 }
 
-// --- ACTUALIZAR CONTADORES UI ---
+// ==========================================
+// 6. LÓGICA DE DATOS
+// ==========================================
 function updateCountersUI() {
     const total = globalData.length;
     const countSpan = document.getElementById('totalRegistros');
     const btnCountSpan = document.getElementById('btnCount');
-    
     if(countSpan) countSpan.innerText = total;
     if(btnCountSpan) btnCountSpan.innerText = total;
-    
-    // Si el modal está abierto, actualizamos gráficas al vuelo
     const modal = document.getElementById('statsModal');
-    if (modal && modal.classList.contains('show')) {
-        updateCharts();
-    }
+    if (modal && modal.classList.contains('show')) updateCharts();
 }
 
-// --- CARGA DE DATOS + REALTIME ---
 async function initData() {
     try {
-        // 1. Carga Inicial
-        const { data, error } = await supabase.from('egresados_unicach').select('*'); 
+        console.log("Conectando a Supabase...");
+        const { data, error } = await client.from('egresados_unicach').select('*'); 
         if (error) throw error;
-
         globalData = data;
         markersLayer.clearLayers();
-        
         let puntosValidos = 0;
-        data.forEach(egresado => {
-            if(addMarkerToMap(egresado)) puntosValidos++;
-        });
-
+        data.forEach(egresado => { if(addMarkerToMap(egresado)) puntosValidos++; });
         updateCountersUI();
-
-        // NOTA: Mantenemos el fitBounds si hay puntos, pero si quieres forzar siempre
-        // la vista de México al inicio, puedes comentar la siguiente línea:
         if (puntosValidos > 0) map.fitBounds(markersLayer.getBounds(), { padding: [50, 50] });
 
-        // 2. Suscripción a Realtime
-        supabase
-            .channel('egresados_realtime')
+        client.channel('egresados_realtime')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'egresados_unicach' }, (payload) => {
-                console.log('⚡ Nuevo registro en tiempo real:', payload.new);
                 globalData.push(payload.new);
                 addMarkerToMap(payload.new);
                 updateCountersUI();
-                
                 const btnStats = document.querySelector('[data-bs-target="#statsModal"]');
-                if(btnStats) {
-                    btnStats.classList.add('btn-warning'); 
-                    setTimeout(() => btnStats.classList.remove('btn-warning'), 1000);
-                }
-            })
-            .subscribe();
-
+                if(btnStats) { btnStats.classList.add('btn-warning'); setTimeout(() => btnStats.classList.remove('btn-warning'), 1000); }
+            }).subscribe();
     } catch (err) { console.error("🔥 Error:", err); }
 }
-
 initData();
 
-// --- INTERFAZ ---
+// ==========================================
+// 7. SIDEBAR Y RESPONSIVIDAD
+// ==========================================
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const toggleIcon = document.getElementById('toggleIcon');
@@ -217,8 +203,10 @@ function initSidebarState() { if (window.innerWidth >= 768) sidebar.classList.ad
 initSidebarState();
 window.addEventListener('resize', () => { updateToggleIcon(); });
 
-// --- UBICACIÓN ---
-let marker = null; let currentLat = null, currentLng = null;
+// ==========================================
+// 8. GEOLOCALIZACIÓN
+// ==========================================
+let userMarker = null; let currentLat = null, currentLng = null;
 const btnLocate = document.getElementById('btnLocate');
 const coordsInfo = document.getElementById('coordsInfo');
 const coordsDisplay = document.getElementById('coordsDisplay');
@@ -230,9 +218,9 @@ function updateLocationUI(lat, lng) {
     setTimeout(() => { btnLocate.classList.remove('btn', 'btn-success', 'text-white'); btnLocate.classList.add('btn-locate'); btnLocate.innerHTML = "📍 Recalcular Ubicación"; }, 2500);
 }
 
-function setMarker(latlng, zoom = null) {
-    if (marker) marker.setLatLng(latlng);
-    else { marker = L.marker(latlng, { draggable: true }).addTo(map); marker.on('dragend', e => { const pos = marker.getLatLng(); updateLocationUI(pos.lat, pos.lng); }); }
+function setUserMarker(latlng, zoom = null) {
+    if (userMarker) userMarker.setLatLng(latlng);
+    else { userMarker = L.marker(latlng, { draggable: true }).addTo(map); userMarker.on('dragend', e => { const pos = userMarker.getLatLng(); updateLocationUI(pos.lat, pos.lng); }); }
     updateLocationUI(latlng.lat, latlng.lng);
     if (zoom) map.setView(latlng, zoom); else map.panTo(latlng);
 }
@@ -242,11 +230,13 @@ btnLocate.addEventListener('click', () => {
     map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
 });
 
-map.on('locationfound', e => { setMarker(e.latlng, 16); if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); } });
-map.on('locationerror', (e) => { alert("⚠️ Activa tu GPS."); btnLocate.innerHTML = "📍 Reintentar GPS"; });
-map.on('click', e => { setMarker(e.latlng); if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); } });
+map.on('locationfound', e => { setUserMarker(e.latlng, 16); if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); } });
+map.on('locationerror', (e) => { alert("⚠️ No se pudo obtener ubicación."); btnLocate.innerHTML = "📍 Reintentar GPS"; });
+map.on('click', e => { setUserMarker(e.latlng); if(window.innerWidth < 768) { sidebar.classList.add('active'); updateToggleIcon(); } });
 
-// --- FORMULARIO ---
+// ==========================================
+// 9. FORMULARIO
+// ==========================================
 const checkOtro = document.getElementById('check_otro');
 const inputOtro = document.getElementById('input_otro_texto');
 checkOtro.addEventListener('change', function() { if(this.checked) { inputOtro.classList.add('show-input'); inputOtro.focus(); } else { inputOtro.classList.remove('show-input'); inputOtro.value = ''; } });
@@ -262,140 +252,147 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault(); 
     if (!currentLat || !currentLng) return alert("⚠️ Falta ubicación.");
     btnSubmit.disabled = true; btnSubmit.innerHTML = "Guardando...";
-
     let carreraVal = selectCarrera.value; if (carreraVal === 'Otro') carreraVal = inputCarreraOtro.value || 'No especificado';
+    
     const formData = {
-        nombre_completo: document.getElementById('nombre').value,
-        carrera: carreraVal, anio_egreso: document.getElementById('anio').value, situacion_laboral: document.getElementById('situacion').value,
+        nombre_completo: document.getElementById('nombre').value, carrera: carreraVal, anio_egreso: document.getElementById('anio').value, situacion_laboral: document.getElementById('situacion').value,
         descripcion_servicios: document.getElementById('descripcion').value, contacto_url: document.getElementById('contacto').value,
         esp_cartografia: document.getElementById('check_cartografia').checked, esp_fotogrametria: document.getElementById('check_fotogrametria').checked,
         esp_topografia: document.getElementById('check_topografia').checked, esp_geodesia: document.getElementById('check_geodesia').checked,
         esp_drones: document.getElementById('check_drones').checked, esp_desarrollo: document.getElementById('check_desarrollo').checked,
-        esp_otro_texto: checkOtro.checked ? inputOtro.value : null,
-        location: `POINT(${currentLng} ${currentLat})`
+        esp_otro_texto: checkOtro.checked ? inputOtro.value : null, location: `POINT(${currentLng} ${currentLat})`
     };
 
     try {
-        const { error } = await supabase.from('egresados_unicach').insert([formData]);
+        const { error } = await client.from('egresados_unicach').insert([formData]);
         if (error) throw error;
-        alert("¡Registro exitoso!");
-        form.reset(); 
+        alert("¡Registro exitoso!"); form.reset(); 
         map.setView(MEXICO_CENTER, MEXICO_ZOOM); coordsInfo.style.display = 'none'; btnLocate.innerHTML = "📍 Obtener mi Ubicación";
         sidebar.classList.remove('active'); updateToggleIcon(); 
-    } catch (err) { alert("Error: " + err.message); } finally { btnSubmit.disabled = false; btnSubmit.innerHTML = "Guardar Registro"; }
+        if(userMarker) { map.removeLayer(userMarker); userMarker = null; }
+    } catch (err) { alert("Error guardando: " + err.message); } finally { btnSubmit.disabled = false; btnSubmit.innerHTML = "Guardar Registro"; }
 });
 
-// --- CHART.JS CONFIGURACIÓN ---
+// ==========================================
+// 10. GRÁFICAS
+// ==========================================
 let chartSituacionInstance = null, chartEspInstance = null;
-
 function updateCharts() {
     if(globalData.length === 0) return;
-
-    // Procesar datos
     const conteoSituacion = {};
     const conteoEsp = { "Cartografía": 0, "Fotogrametría": 0, "Topografía": 0, "Geodesia": 0, "Drones": 0, "Dev/SIG": 0 };
-    
     globalData.forEach(item => { 
-        const sit = item.situacion_laboral || "No especificado"; 
-        conteoSituacion[sit] = (conteoSituacion[sit] || 0) + 1; 
-        
-        if(item.esp_cartografia) conteoEsp["Cartografía"]++; 
-        if(item.esp_fotogrametria) conteoEsp["Fotogrametría"]++; 
-        if(item.esp_topografia) conteoEsp["Topografía"]++; 
-        if(item.esp_geodesia) conteoEsp["Geodesia"]++; 
-        if(item.esp_drones) conteoEsp["Drones"]++; 
-        if(item.esp_desarrollo) conteoEsp["Dev/SIG"]++; 
+        const sit = item.situacion_laboral || "No especificado"; conteoSituacion[sit] = (conteoSituacion[sit] || 0) + 1; 
+        if(item.esp_cartografia) conteoEsp["Cartografía"]++; if(item.esp_fotogrametria) conteoEsp["Fotogrametría"]++; 
+        if(item.esp_topografia) conteoEsp["Topografía"]++; if(item.esp_geodesia) conteoEsp["Geodesia"]++; 
+        if(item.esp_drones) conteoEsp["Drones"]++; if(item.esp_desarrollo) conteoEsp["Dev/SIG"]++; 
     });
-
-    const colorPalette = ['#003399', '#FFCC00', '#28a745', '#dc3545', '#6c757d', '#17a2b8'];
-    const isMobile = window.innerWidth < 768; // DETECTAR MÓVIL
-
-    // Gráfico 1: Situación (Doughnut)
+    const isMobile = window.innerWidth < 768;
     const ctx1 = document.getElementById('chartSituacion');
     if (ctx1) {
         if(chartSituacionInstance) chartSituacionInstance.destroy();
-        chartSituacionInstance = new Chart(ctx1.getContext('2d'), { 
-            type: 'doughnut', 
-            data: { 
-                labels: Object.keys(conteoSituacion), 
-                datasets: [{ 
-                    data: Object.values(conteoSituacion), 
-                    backgroundColor: colorPalette,
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }] 
-            }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                layout: { padding: 10 },
-                plugins: { 
-                    legend: { 
-                        position: isMobile ? 'right' : 'bottom', 
-                        labels: { 
-                            boxWidth: 10, 
-                            padding: 10, 
-                            font: { size: isMobile ? 10 : 12 } 
-                        },
-                        display: true 
-                    } 
-                } 
-            } 
-        });
+        chartSituacionInstance = new Chart(ctx1.getContext('2d'), { type: 'doughnut', data: { labels: Object.keys(conteoSituacion), datasets: [{ data: Object.values(conteoSituacion), backgroundColor: ['#003399', '#FFCC00', '#28a745', '#dc3545', '#6c757d', '#17a2b8'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, plugins: { legend: { position: isMobile ? 'right' : 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: isMobile ? 10 : 12 } }, display: true } } } });
     }
-
-    // Gráfico 2: Especialidades (Bar)
     const ctx2 = document.getElementById('chartEspecialidades');
     if (ctx2) {
         if(chartEspInstance) chartEspInstance.destroy();
-        chartEspInstance = new Chart(ctx2.getContext('2d'), { 
-            type: 'bar', 
-            data: { 
-                labels: Object.keys(conteoEsp), 
-                datasets: [{ 
-                    label: 'Ingenieros', 
-                    data: Object.values(conteoEsp), 
-                    backgroundColor: '#003399', 
-                    borderRadius: 4
-                }] 
-            }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                indexAxis: 'y', 
-                scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, 
-                plugins: { legend: { display: false } } 
-            } 
-        });
+        chartEspInstance = new Chart(ctx2.getContext('2d'), { type: 'bar', data: { labels: Object.keys(conteoEsp), datasets: [{ label: 'Ingenieros', data: Object.values(conteoEsp), backgroundColor: '#003399', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } });
     }
 }
 
-// --- TOUR GUIADO INTELIGENTE (ACTUALIZADO) ---
+// ==========================================
+// 11. TOUR GUIADO INTELIGENTE (ACTUALIZADO)
+// ==========================================
+
+// Función auxiliar para abrir/cerrar sidebar según necesidad
 const toggleSidebarForTour = (shouldBeOpen) => {
     const isActive = sidebar.classList.contains('active');
-    if (shouldBeOpen && !isActive) sidebar.classList.add('active');
-    else if (!shouldBeOpen && isActive) sidebar.classList.remove('active');
-    updateToggleIcon();
+    
+    // Si debe estar abierto y está cerrado -> Abrir
+    if (shouldBeOpen && !isActive) {
+        sidebar.classList.add('active');
+        updateToggleIcon();
+    } 
+    // Si debe estar cerrado (para mostrar mapa) y está abierto -> Cerrar
+    else if (!shouldBeOpen && isActive) {
+        sidebar.classList.remove('active');
+        updateToggleIcon();
+    }
 };
 
-const driver = window.driver.js.driver({
-    showProgress: true, animate: true, nextBtnText: 'Siguiente →', prevBtnText: '← Atrás', doneBtnText: '¡Listo!',
-    onDestroyed: () => { if (window.innerWidth >= 768) toggleSidebarForTour(true); },
-    steps: [
-        { element: '#sidebar', popover: { title: '📝 Registro', description: 'Regístrate aquí.', side: "right", align: 'start' }, onHighlightStarted: () => toggleSidebarForTour(true) },
-        { element: '#btnLocate', popover: { title: '📍 GPS', description: 'Obtén tu ubicación antes de guardar.', side: "bottom" }, onHighlightStarted: () => toggleSidebarForTour(true) },
-        { element: '.leaflet-control-layers', popover: { title: '🗺️ Mapas', description: 'Cambia el fondo.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
-        
-        // PASOS DE ZOOM Y RESET INCLUIDOS
-        { element: '.leaflet-control-zoom', popover: { title: '🔍 Zoom', description: 'Acerca o aleja el mapa.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
-        { element: '#btnResetView', popover: { title: '🏠 Vista General', description: 'Regresa al mapa de México.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
-        
-        { element: '#btnHelp', popover: { title: '❓ Ayuda', description: 'Repite este tour cuando quieras.', side: "left" }, onHighlightStarted: () => { if(window.innerWidth < 768) toggleSidebarForTour(false); } },
-        { element: '.info.legend', popover: { title: '🏷️ Simbología', description: 'Azul: tú. Dorado: colegas.', side: "top" }, onHighlightStarted: () => toggleSidebarForTour(false) }
-    ]
-});
+function startTour() {
+    const driver = window.driver.js.driver;
+    const isMobile = window.innerWidth < 768;
 
-if (!localStorage.getItem('tourVisto')) { setTimeout(() => { driver.drive(); localStorage.setItem('tourVisto', 'true'); }, 1500); }
+    const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        nextBtnText: 'Siguiente →',
+        prevBtnText: '← Atrás',
+        doneBtnText: '¡Listo!',
+        // Restaura el sidebar al terminar (si es escritorio)
+        onDestroyed: () => { 
+            if (!isMobile) toggleSidebarForTour(true); 
+        },
+        steps: [
+            // PASO 1: Registro (Sidebar DEBE estar abierto)
+            { 
+                element: '#sidebar', 
+                popover: { title: '📝 Registro', description: 'Regístrate aquí.', side: "right", align: 'start' },
+                onHighlightStarted: () => toggleSidebarForTour(true)
+            },
+            // PASO 2: GPS (Sidebar DEBE estar abierto)
+            { 
+                element: '#btnLocate', 
+                popover: { title: '📍 GPS', description: 'Obtén tu ubicación antes de guardar.', side: "bottom" },
+                onHighlightStarted: () => toggleSidebarForTour(true)
+            },
+            // PASO 3: Capas (Sidebar DEBE estar cerrado en móvil)
+            { 
+                element: '.leaflet-control-layers', 
+                popover: { title: '🗺️ Mapas', description: 'Cambia el fondo.', side: "left" },
+                onHighlightStarted: () => { if(isMobile) toggleSidebarForTour(false); }
+            },
+            // PASO 4: Zoom (Sidebar DEBE estar cerrado en móvil)
+            { 
+                element: '.leaflet-control-zoom', 
+                popover: { title: '🔍 Zoom', description: 'Acerca o aleja el mapa.', side: "left" },
+                onHighlightStarted: () => { if(isMobile) toggleSidebarForTour(false); }
+            },
+            // PASO 5: Reset View (Sidebar DEBE estar cerrado en móvil)
+            { 
+                element: '#btnResetView', 
+                popover: { title: '🏠 Vista General', description: 'Regresa al mapa de México.', side: "left" },
+                onHighlightStarted: () => { if(isMobile) toggleSidebarForTour(false); }
+            },
+            // PASO 6: Ayuda (Sidebar DEBE estar cerrado en móvil)
+            { 
+                element: '#btnHelp', 
+                popover: { title: '❓ Ayuda', description: 'Repite este tour cuando quieras.', side: "left" },
+                onHighlightStarted: () => { if(isMobile) toggleSidebarForTour(false); }
+            },
+            // PASO 7: SIMBOLOGÍA (CORREGIDO: Sidebar DEBE cerrarse en AMBOS)
+            { 
+                element: '.info.legend', 
+                popover: { title: '🏷️ Simbología', description: 'Azul: tú. Dorado: colegas.', side: "top" },
+                // CORRECCIÓN AQUÍ: Quitamos el "if(isMobile)" para que cierre siempre
+                onHighlightStarted: () => { toggleSidebarForTour(false); }
+            }
+        ]
+    });
 
+    driverObj.drive();
+}
+
+// Iniciar tour automáticamente
 const ua = navigator.userAgent || navigator.vendor || window.opera;
-if ((ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1)) { document.getElementById('browser-alert').style.display = 'block'; }
+if ((ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1)) { 
+    document.getElementById('browser-alert').style.display = 'block'; 
+} else {
+    if (!localStorage.getItem('tourVisto')) { 
+        setTimeout(() => { 
+            startTour(); 
+            localStorage.setItem('tourVisto', 'true'); 
+        }, 1500); 
+    }
+}
